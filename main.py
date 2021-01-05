@@ -17,7 +17,8 @@ pygame.display.set_caption('Chicken-Run')
 isUP = False
 game_over = False
 score = 0
-
+count_UP = 0
+count_DOWN = 0
 # load images
 bg = pygame.image.load('img/bg.png')
 
@@ -47,6 +48,19 @@ tiles_group = pygame.sprite.Group()
 tiles_group1 = pygame.sprite.Group()
 tiles_group3 = pygame.sprite.Group()
 tiles_group4 = pygame.sprite.Group()
+
+image1 = pygame.transform.scale(load_image('Chicken-up_stay.png'), (40, 50))  # motion animation
+image2 = pygame.transform.scale(load_image('Chicken-up_run.png'), (40, 50))  # motion animation
+images_UP = []
+images_UP.append(image1)
+images_UP.append(image2)
+
+
+image3 = pygame.transform.scale(load_image('Chicken-down_stay.png'), (40, 50))  # motion animation
+image4 = pygame.transform.scale(load_image('Chicken-down_run.png'), (40, 50))   # motion animation
+images_DOWN = []
+images_DOWN.append(image3)
+images_DOWN.append(image4)
 
 
 class Tile(pygame.sprite.Sprite):
@@ -120,21 +134,37 @@ class Bird(pygame.sprite.Sprite):
                     frame_location, self.rect.size)))
 
     def update(self):
-        self.x += 2
+        self.x += 2         # speed hero
         if pygame.sprite.spritecollideany(self, tiles_group3):
             self.x -= 5
 
         if pygame.sprite.spritecollideany(self, tiles_group4):
             self.x -= 5
-        self.rect = self.image.get_rect().move(self.x, self.y - 35)
+        self.rect = self.image.get_rect().move(self.x, self.y)
         self.cur_frame = (self.cur_frame + 1) % len(self.frames)
         self.image = self.frames[self.cur_frame]
         if isUP == True:
-            self.image = pygame.image.load(f'img/bird1.png')
+                draw_UP()
         if not pygame.sprite.spritecollideany(self, tiles_group1) and isUP == False:
             self.y += self.vel
         if not pygame.sprite.spritecollideany(self, tiles_group) and isUP == True:
             self.y -= self.vel
+
+
+def draw_UP():            # motion animation
+    global count_UP
+    if count_UP == 4:
+        count_UP = 0
+    flappy.image = images_UP[count_UP // 2]
+    count_UP += 1
+
+
+def draw_DOWN():           # motion animation
+    global count_DOWN
+    if count_DOWN == 4:
+        count_DOWN = 0
+    flappy.image = images_DOWN[count_DOWN // 2]
+    count_DOWN += 1
 
 
 def load_level(filename):
@@ -173,7 +203,7 @@ def generate_level(level, c):
 
 bird_group = pygame.sprite.Group()
 level_map = load_level('map.txt')
-flappy = Bird(load_image('Chicken-sprite.png'), 2, 1, level_map)
+flappy = Bird(pygame.transform.scale(load_image('Chicken-down_stay.png'), (40, 50)), 1, 1, level_map)
 
 
 bird_group.add(flappy)
@@ -185,7 +215,8 @@ run = True
 while run:
 
     clock.tick(fps)
-
+    if isUP == False:
+        draw_DOWN()
     # draw background
     tiles_group = pygame.sprite.Group()
     tiles_group1 = pygame.sprite.Group()
