@@ -55,9 +55,8 @@ images_UP = []
 images_UP.append(image1)
 images_UP.append(image2)
 
-
 image3 = pygame.transform.scale(load_image('Chicken-down_stay.png'), (40, 50))  # motion animation
-image4 = pygame.transform.scale(load_image('Chicken-down_run.png'), (40, 50))   # motion animation
+image4 = pygame.transform.scale(load_image('Chicken-down_run.png'), (40, 50))  # motion animation
 images_DOWN = []
 images_DOWN.append(image3)
 images_DOWN.append(image4)
@@ -69,7 +68,7 @@ class Tile(pygame.sprite.Sprite):
         self.image = tile_images[tile_type]
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect().move(
-                tile_width * pos_x, tile_height * pos_y)
+            tile_width * pos_x, tile_height * pos_y)
 
 
 class Tile1(pygame.sprite.Sprite):
@@ -78,7 +77,7 @@ class Tile1(pygame.sprite.Sprite):
         self.image = tile_images[tile_type]
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect().move(
-                tile_width * pos_x, tile_height * pos_y)
+            tile_width * pos_x, tile_height * pos_y)
 
 
 class Tile3(pygame.sprite.Sprite):
@@ -87,7 +86,7 @@ class Tile3(pygame.sprite.Sprite):
         self.image = tile_images[tile_type]
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect().move(
-                tile_width * pos_x, tile_height * pos_y)
+            tile_width * pos_x, tile_height * pos_y)
         self.image = tile_images[tile_type]
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect().move(
@@ -100,7 +99,7 @@ class Tile4(pygame.sprite.Sprite):
         self.image = tile_images[tile_type]
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect().move(
-                tile_width * pos_x, tile_height * pos_y)
+            tile_width * pos_x, tile_height * pos_y)
         self.image = tile_images[tile_type]
         self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect().move(
@@ -134,7 +133,7 @@ class Bird(pygame.sprite.Sprite):
                     frame_location, self.rect.size)))
 
     def update(self):
-        self.x += 2         # speed hero
+        self.x += 2  # speed hero
         if pygame.sprite.spritecollideany(self, tiles_group3):
             self.x -= 5
 
@@ -144,14 +143,19 @@ class Bird(pygame.sprite.Sprite):
         self.cur_frame = (self.cur_frame + 1) % len(self.frames)
         self.image = self.frames[self.cur_frame]
         if isUP == True:
-                draw_UP()
+            draw_UP()
         if not pygame.sprite.spritecollideany(self, tiles_group1) and isUP == False:
-            self.y += self.vel
+            if not pygame.sprite.spritecollideany(self, tiles_group4) and isUP == False:
+                self.y += self.vel
+            else:
+                self.x += 5
         if not pygame.sprite.spritecollideany(self, tiles_group) and isUP == True:
-            self.y -= self.vel
+            if not pygame.sprite.spritecollideany(self, tiles_group3) and isUP == True:
+                self.y -= self.vel
+            else:
+                self.x += 5
 
-
-def draw_UP():            # motion animation
+def draw_UP():  # motion animation
     global count_UP
     if count_UP == 4:
         count_UP = 0
@@ -159,7 +163,7 @@ def draw_UP():            # motion animation
     count_UP += 1
 
 
-def draw_DOWN():           # motion animation
+def draw_DOWN():  # motion animation
     global count_DOWN
     if count_DOWN == 4:
         count_DOWN = 0
@@ -185,17 +189,17 @@ def generate_level(level, c):
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '#':
-                if a <= 42:
-                    Tile('wall', x - c, y)
+                if a <= 39:
+                    Tile('wall', x - c, y)  # upper blocks
                     a += 1
                 else:
-                    Tile1('wall', x - c, y)
+                    Tile1('wall', x - c, y)  # lower blocks
             elif level[y][x] == '!':
-                if a <= 42:
-                    Tile3('wall', x - c, y)
+                if a <= 39:
+                    Tile3('wall', x - c, y)  # upper barriers
                     a += 1
                 else:
-                    Tile4('wall', x - c, y)
+                    Tile4('wall', x - c, y)  # lower barriers
 
     # we will return the player, as well as the size of the field in cells
     return new_player, x, y
@@ -205,9 +209,7 @@ bird_group = pygame.sprite.Group()
 level_map = load_level('map.txt')
 flappy = Bird(pygame.transform.scale(load_image('Chicken-down_stay.png'), (40, 50)), 1, 1, level_map)
 
-
 bird_group.add(flappy)
-
 
 map_speed = 1
 
@@ -218,10 +220,10 @@ while run:
     if isUP == False:
         draw_DOWN()
     # draw background
-    tiles_group = pygame.sprite.Group()
-    tiles_group1 = pygame.sprite.Group()
-    tiles_group3 = pygame.sprite.Group()
-    tiles_group4 = pygame.sprite.Group()
+    tiles_group = pygame.sprite.Group()   # upper blocks
+    tiles_group1 = pygame.sprite.Group()  # lower blocks
+    tiles_group3 = pygame.sprite.Group()  # upper barriers
+    tiles_group4 = pygame.sprite.Group()  # lower barriers
 
     screen.blit(bg, (0, 0))
     hero, level_x, level_y = generate_level(level_map, map_speed)
