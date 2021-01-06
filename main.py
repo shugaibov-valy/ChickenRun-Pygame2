@@ -4,8 +4,21 @@ import sys
 import datetime
 
 pygame.init()
-pygame.mixer.music.load("music/fon.mp3")
-pygame.mixer.music.play(loops=0, start=0.0)
+start = pygame.mixer.Channel(0)
+fon = pygame.mixer.Channel(1)
+jump_hero = pygame.mixer.Channel(2)
+hero_in_air = pygame.mixer.Channel(3)
+end = pygame.mixer.Channel(4)
+start_go = pygame.mixer.Sound('music/3, 2, 1.wav')
+fon_music = pygame.mixer.Sound('music/fon.wav')
+fon_music.set_volume(0.3)
+jump = pygame.mixer.Sound('music/jump.wav')
+in_air = pygame.mixer.Sound('music/hero_in_air.wav')
+end_game = pygame.mixer.Sound('music/end_game.wav')
+start.play(start_go)
+fon.play(fon_music)
+
+
 clock = pygame.time.Clock()
 fps = 31
 Bird_update = 10
@@ -43,6 +56,7 @@ def load_image(name, colorkey=None):
 
 tile_images = {
     'wall': load_image('box.png'),
+    'finish-line': pygame.transform.scale(load_image('Finish-line.png'), (250, 270))
 }
 tile_width = tile_height = 50
 
@@ -51,6 +65,7 @@ tiles_group1 = pygame.sprite.Group()
 tiles_group3 = pygame.sprite.Group()
 tiles_group4 = pygame.sprite.Group()
 start_group = pygame.sprite.Group()
+finish_group = pygame.sprite.Group()
 
 image1 = pygame.transform.scale(load_image('Chicken-up_stay.png'), (40, 50))  # motion animation
 image2 = pygame.transform.scale(load_image('Chicken-up_run.png'), (40, 50))  # motion animation
@@ -109,6 +124,15 @@ class Tile4(pygame.sprite.Sprite):
             tile_width * pos_x, tile_height * pos_y - 50)
 
 
+class Finish_line(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(finish_group)
+        self.image = tile_images[tile_type]
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x - 80, tile_height * pos_y - 10)
+
+
 class Bird(pygame.sprite.Sprite):
     def __init__(self, sheet, level):
         super().__init__(bird_group)
@@ -125,8 +149,9 @@ class Bird(pygame.sprite.Sprite):
                     self.x = x * tile_width
 
     def update(self):
+        global finish
         if start == 0:
-            self.x += 1
+            self.x += 0.5
         if pygame.sprite.spritecollideany(self, tiles_group3):
             self.x -= 5
 
@@ -146,7 +171,10 @@ class Bird(pygame.sprite.Sprite):
                 self.y -= self.vel
             else:
                 self.x += 5
-
+        if pygame.sprite.spritecollideany(self, finish_group):
+            end.play(end_game)
+            fon_music.set_volume(0)
+            finish = 1
 
 class Start_line(pygame.sprite.Sprite):
     def __init__(self, sheet, level):
@@ -164,7 +192,6 @@ class Start_line(pygame.sprite.Sprite):
 
     def update(self):
         self.rect = self.image.get_rect().move(self.x, self.y)
-
 
 def draw_UP():  # motion animation
     global count_UP
@@ -200,13 +227,15 @@ def generate_level(level, c):
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '#':
-                if a <= 42:
+                if a <= 46:
                     Tile('wall', x - c, y)  # upper blocks
                     a += 1
                 else:
-                    Tile1('wall', x - c, y)  # lower blocks
+                    Tile1('wall', x - c, y)  # lower blockы
+            elif level[y][x] == '|':
+                    Finish_line('finish-line', x - c, y)
             elif level[y][x] == '!':
-                if a <= 42:
+                if a <= 46:
                     Tile3('wall', x - c, y)  # upper barriers
                     a += 1
                 else:
@@ -220,17 +249,31 @@ bird_group = pygame.sprite.Group()
 level_map = load_level('map.txt')
 flappy = Bird(pygame.transform.scale(load_image('Chicken-down_stay.png'), (40, 50)), level_map)
 start_line = Start_line(pygame.transform.rotate(pygame.transform.scale(load_image('Start-line.png'), (170, 150)), 90), level_map)
-
 bird_group.add(flappy)
 start_group.add(start_line)
 
+finish = 0
 map_speed = 1
 start = 1     # start line close
 run = True
 first_time = datetime.datetime.now()
+lose = 0
 while run:
-
     clock.tick(fps)
+
+    if flappy.x < 0 and lose == 0:
+        hero_in_air.play(in_air)
+        fon_music.set_volume(0)
+        lose = 1
+    if flappy.y <= 265 and lose == 0 and finish == 0:
+        hero_in_air.play(in_air)
+        fon_music.set_volume(0)
+        lose = 1
+    elif flappy.y >= 510 and lose == 0 and finish == 0:
+        hero_in_air.play(in_air)
+        fon_music.set_volume(0)
+        lose = 1
+
     if isUP == False:
         draw_DOWN()
     # draw background
@@ -238,6 +281,7 @@ while run:
     tiles_group1 = pygame.sprite.Group()  # lower blocks
     tiles_group3 = pygame.sprite.Group()  # upper barriers
     tiles_group4 = pygame.sprite.Group()  # lower barriers
+    finish_group = pygame.sprite.Group()  # lower barriers
     screen.blit(bg, (0, 0))
     hero, level_x, level_y = generate_level(level_map, map_speed)
 
@@ -250,11 +294,14 @@ while run:
     tiles_group3.update()
     tiles_group4.draw(screen)
     tiles_group4.update()
+    finish_group.draw(screen)
+    finish_group.update()
     bird_group.draw(screen)
     bird_group.update()
     start_group.draw(screen)
     start_group.update()
     flappy.update()
+
     if start == 0:
         map_speed += 0.1
         start_line.update()
@@ -269,10 +316,12 @@ while run:
             run = False
         key = pygame.key.get_pressed()
         if key[pygame.K_UP] and isUP == False:
+            jump_hero.play(jump)
             isUP = True
             bird_group.draw(screen)
             bird_group.update()
         if key[pygame.K_DOWN] and isUP == True:
+            jump_hero.play(jump)
             isUP = False
     pygame.display.update()
 pygame.quit()
