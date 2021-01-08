@@ -7,13 +7,18 @@ from PIL import Image, ImageFilter
 
 pygame.init()
 isUP = False
+isUP1 = False
+
 count_UP = 0
 count_DOWN = 0
+count_UP1 = 0
+count_DOWN1 = 0
 finish = 0
 
 
 def main():
     global finish
+    global isUP1
     global isUP
     global count_UP
     global count_DoWN
@@ -153,8 +158,9 @@ def main():
 
         def update(self):
             global finish
+            global winner
             if start == 0:
-                self.x += 0.5
+                self.x += 0.4
             if pygame.sprite.spritecollideany(self, tiles_group3):
                 self.x -= 5
 
@@ -178,10 +184,61 @@ def main():
                 end.play(end_game)
                 fon_music.set_volume(0)
                 finish = 1
+                if winner == 0:
+                    winner = 'flappy'
             if pygame.sprite.spritecollideany(self, arrows_group):
                     arrow.play(arrow_player)
-                    self.x += 300
+                    self.x += 240
 
+
+    class Bird1(pygame.sprite.Sprite):
+        def __init__(self, sheet, level):
+            super().__init__(bird_group)
+            self.frames = []
+            self.image = sheet
+            self.x = 0
+            self.y = 0
+            self.vel = 10
+            self.rect = self.image.get_rect()
+            for y in range(len(level)):
+                for x in range(len(level[y])):
+                    if level[y][x] == '@':
+                        self.y = y * tile_height
+                        self.x = x * tile_width
+
+        def update(self):
+            global finish
+            global winner
+            if start == 0:
+                self.x += 0.4
+            if pygame.sprite.spritecollideany(self, tiles_group3):
+                self.x -= 5
+
+            if pygame.sprite.spritecollideany(self, tiles_group4):
+                self.x -= 5
+            self.rect = self.image.get_rect().move(self.x, self.y)
+
+            if isUP1 == True:
+                draw_UP1()
+            if not pygame.sprite.spritecollideany(self, tiles_group1) and isUP1 == False:
+                if not pygame.sprite.spritecollideany(self, tiles_group4) and isUP1 == False:
+                    self.y += self.vel
+                else:
+                    self.x += 5
+            if not pygame.sprite.spritecollideany(self, tiles_group) and isUP1 == True:
+                if not pygame.sprite.spritecollideany(self, tiles_group3) and isUP1 == True:
+                    self.y -= self.vel
+                else:
+                    self.x += 5
+            if pygame.sprite.spritecollideany(self, finish_group):
+                end.play(end_game)
+                fon_music.set_volume(0)
+                finish = 1
+                if winner == 0:
+                    winner = 'flappy1'
+            if pygame.sprite.spritecollideany(self, arrows_group):
+                    arrow.play(arrow_player)
+                    self.x += 240
 
 
     class Start_line(pygame.sprite.Sprite):
@@ -243,6 +300,20 @@ def main():
         flappy.image = images_DOWN[count_DOWN // 2]
         count_DOWN += 1
 
+    def draw_UP1():  # motion animation
+        global count_UP1
+        if count_UP1 == 4:
+            count_UP1 = 0
+        flappy1.image = images_UP[count_UP1 // 2]
+        count_UP1 += 1
+
+    def draw_DOWN1():  # motion animation
+        global count_DOWN1
+        if count_DOWN1 == 4:
+            count_DOWN1 = 0
+        flappy1.image = images_DOWN[count_DOWN1 // 2]
+        count_DOWN1 += 1
+
     def load_level(filename):
         filename = "data/" + filename
         # reading the level by removing newline characters
@@ -295,12 +366,15 @@ def main():
     bird_group = pygame.sprite.Group()
     level_map = load_level('map.txt')
     flappy = Bird(pygame.transform.scale(load_image('Chicken-down_stay.png'), (40, 50)), level_map)
+    flappy1 = Bird1(pygame.transform.scale(load_image('Chicken-down_stay.png'), (40, 50)), level_map)
     start_line = Start_line(
         pygame.transform.rotate(pygame.transform.scale(load_image('Start-line.png'), (170, 150)), 90),
         level_map)
     bird_group.add(flappy)
+    bird_group.add(flappy1)
     start_group.add(start_line)
 
+    winner = 0
     map_speed = 1
     start = 1  # start line close
     run = True
@@ -308,8 +382,8 @@ def main():
     lose = 0
     restart_img = pygame.transform.scale(pygame.image.load('data/restart.png'), (95, 95))
     home_img = pygame.transform.scale(pygame.image.load('data/home.png'), (110, 110))
-    restart_button = Button(screen_width // 2 + 50, screen_height // 2 - 80, restart_img)
-    home_button = Button(screen_width // 2 - 100, screen_height // 2 - 90, home_img)
+    restart_button = Button(screen_width // 2 + 30, screen_height // 2 - 80, restart_img)
+    home_button = Button(screen_width // 2 - 120, screen_height // 2 - 90, home_img)
 
     while run:
         clock.tick(fps)
@@ -319,20 +393,53 @@ def main():
                 fon_music.set_volume(0)
                 lose = 1
                 finish = 1
+                winner = 'flappy'
                 blur_background()  # blur
             if flappy.y <= 265 and lose == 0 and finish == 0:
                 hero_in_air.play(in_air)
                 fon_music.set_volume(0)
                 lose = 1
                 finish = 1
+                winner = 'flappy'
                 blur_background()  # blur
-            elif flappy.y >= 510 and lose == 0 and finish == 0:
+            if flappy.y >= 510 and lose == 0 and finish == 0:
                 hero_in_air.play(in_air)
                 fon_music.set_volume(0)
                 lose = 1
                 finish = 1
+                winner = 'flappy'
                 blur_background()  # blur
+
+
+            if flappy1.x < 0 and lose == 0:
+                hero_in_air.play(in_air)
+                fon_music.set_volume(0)
+                lose = 1
+                finish = 1
+                winner = 'flappy1'
+                blur_background()  # blur
+            if flappy1.y <= 265 and lose == 0 and finish == 0:
+                hero_in_air.play(in_air)
+                fon_music.set_volume(0)
+                lose = 1
+                finish = 1
+                winner = 'flappy1'
+                blur_background()  # blur
+            elif flappy1.y >= 510 and lose == 0 and finish == 0:
+                hero_in_air.play(in_air)
+                fon_music.set_volume(0)
+                lose = 1
+                finish = 1
+                winner = 'flappy1'
+                blur_background()  # blur
+
+
             flappy.update()
+            flappy1.update()
+
+
+            if isUP1 == False:
+                draw_DOWN1()
 
             if isUP == False:
                 draw_DOWN()
@@ -378,8 +485,18 @@ def main():
 
             restart_button.draw()  # RESTART BUTTON
             home_button.draw()  # HOME BUTTON
+            win_baner = pygame.transform.scale(pygame.image.load('data/win_baner.png'), (250, 100))
+            screen.blit(win_baner, (310, 80))
+            if winner == 'flappy':
+                flapp = pygame.transform.scale(pygame.image.load('data/Chicken-down_stay.png'), (40, 50))
+                screen.blit(flapp, (415, 150))
 
+            elif winner == 'flappy1':
+                flapp = pygame.transform.scale(pygame.image.load('data/Chicken-down_stay.png'), (40, 50))
+                screen.blit(flapp, (415, 150))
             flappy = 0
+            flappy1 = 0
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -392,8 +509,18 @@ def main():
             if key[pygame.K_DOWN] and isUP == True and finish == 0:
                 jump_hero.play(jump)
                 isUP = False
+
+            if key[pygame.K_w] and isUP1 == False and finish == 0:
+                jump_hero.play(jump)
+                isUP1 = True
+                bird_group.draw(screen)
+                bird_group.update()
+            if key[pygame.K_s] and isUP1 == True and finish == 0:
+                jump_hero.play(jump)
+                isUP1 = False
+
             if event.type == pygame.MOUSEBUTTONDOWN and finish == 1:
-                if 582 >= event.pos[0] >= 482 and 300 <= event.pos[1] <= 400:  # PUSH RESTART
+                if 562 >= event.pos[0] >= 462 and 300 <= event.pos[1] <= 400:  # PUSH RESTART
                     finish = 0
                     main()  # RESTART
 
