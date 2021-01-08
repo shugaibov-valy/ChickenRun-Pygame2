@@ -2,12 +2,15 @@ import pygame
 import os
 import sys
 import datetime
+import time
+from PIL import Image, ImageFilter
 
 pygame.init()
 isUP = False
 count_UP = 0
 count_DOWN = 0
 finish = 0
+
 
 def main():
     global finish
@@ -59,7 +62,7 @@ def main():
 
     tile_images = {
         'wall': load_image('ground.jpg'),
-        'finish-line': pygame.transform.scale(load_image('Finish-line.png'), (250, 270))
+        'finish-line': pygame.transform.scale(load_image('Finish-line.png'), (95, 230))
     }
     tile_width = tile_height = 50
 
@@ -120,7 +123,7 @@ def main():
             self.image = tile_images[tile_type]
             self.mask = pygame.mask.from_surface(self.image)
             self.rect = self.image.get_rect().move(
-                tile_width * pos_x - 80, tile_height * pos_y - 10)
+                tile_width * pos_x + 60, tile_height * pos_y)
 
     class Bird(pygame.sprite.Sprite):
         def __init__(self, sheet, level):
@@ -161,6 +164,7 @@ def main():
                 else:
                     self.x += 5
             if pygame.sprite.spritecollideany(self, finish_group):
+                self.x += 30
                 end.play(end_game)
                 fon_music.set_volume(0)
                 finish = 1
@@ -241,7 +245,7 @@ def main():
         for y in range(len(level)):
             for x in range(len(level[y])):
                 if level[y][x] == '#':
-                    if a <= 45:
+                    if a <= 43:
                         Tile('wall', x - c, y)  # upper blocks
                         a += 1
                     else:
@@ -249,7 +253,7 @@ def main():
                 elif level[y][x] == '|':
                     Finish_line('finish-line', x - c, y)
                 elif level[y][x] == '!':
-                    if a <= 45:
+                    if a <= 43:
                         Tile('wall', x - c, y)
                         Tile3('wall', x - c, y)  # upper barriers
                         a += 1
@@ -260,6 +264,17 @@ def main():
         # we will return the player, as well as the size of the field in cells
         return new_player, x, y
 
+    def blur_background():
+        time.sleep(1.5)
+        rect = pygame.Rect(0, 0, 864, 760)
+        sub = screen.subsurface(rect)
+        pygame.image.save(sub, "screenshot.jpg")
+        im = Image.open('screenshot.jpg')
+        im = im.filter(ImageFilter.GaussianBlur(radius=2))  # Blur background screenshot
+        im.save('screenshot.jpg')
+        bg = pygame.image.load('screenshot.jpg')
+        screen.blit(bg, (0, 0))
+
     bird_group = pygame.sprite.Group()
     level_map = load_level('map.txt')
     flappy = Bird(pygame.transform.scale(load_image('Chicken-down_stay.png'), (40, 50)), level_map)
@@ -269,7 +284,6 @@ def main():
     bird_group.add(flappy)
     start_group.add(start_line)
 
-   # finish = 0
     map_speed = 1
     start = 1  # start line close
     run = True
@@ -287,15 +301,22 @@ def main():
                 hero_in_air.play(in_air)
                 fon_music.set_volume(0)
                 lose = 1
+                finish = 1
+                blur_background()  # blur
             if flappy.y <= 265 and lose == 0 and finish == 0:
                 hero_in_air.play(in_air)
                 fon_music.set_volume(0)
                 lose = 1
+                finish = 1
+                blur_background()  # blur
             elif flappy.y >= 510 and lose == 0 and finish == 0:
                 hero_in_air.play(in_air)
                 fon_music.set_volume(0)
                 lose = 1
+                finish = 1
+                blur_background()  # blur
             flappy.update()
+
             if isUP == False:
                 draw_DOWN()
             # draw background
@@ -322,7 +343,7 @@ def main():
         start_group.draw(screen)
         start_group.update()
 
-        if start == 0:
+        if start == 0:  # run after start line
             map_speed += 0.1
             start_line.update()
         second_time = datetime.datetime.now()
@@ -333,8 +354,11 @@ def main():
             start_line.y = 0
 
         if finish == 1:
-            restart_button.draw()    # RESTART BUTTON
-            home_button.draw()       # HOME BUTTON
+            blur_background()  # blur
+
+            restart_button.draw()  # RESTART BUTTON
+            home_button.draw()  # HOME BUTTON
+
             flappy = 0
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -349,9 +373,10 @@ def main():
                 jump_hero.play(jump)
                 isUP = False
             if event.type == pygame.MOUSEBUTTONDOWN and finish == 1:
-                if 582 >= event.pos[0] >= 482 and 300 <= event.pos[1] <= 400:    # PUSH RESTART
+                if 582 >= event.pos[0] >= 482 and 300 <= event.pos[1] <= 400:  # PUSH RESTART
                     finish = 0
-                    main()                   # RESTART
+                    main()  # RESTART
+
         pygame.display.update()
     pygame.quit()
 
