@@ -22,12 +22,14 @@ def main():
     jump_hero = pygame.mixer.Channel(2)
     hero_in_air = pygame.mixer.Channel(3)
     end = pygame.mixer.Channel(4)
+    arrow = pygame.mixer.Channel(5)
     start_go = pygame.mixer.Sound('music/3, 2, 1.wav')
     fon_music = pygame.mixer.Sound('music/fon.wav')
     fon_music.set_volume(0.3)
     jump = pygame.mixer.Sound('music/jump.wav')
     in_air = pygame.mixer.Sound('music/hero_in_air.wav')
     end_game = pygame.mixer.Sound('music/end_game.wav')
+    arrow_player = pygame.mixer.Sound('music/arrow.wav')
     start.play(start_go)
     fon.play(fon_music)
 
@@ -72,6 +74,7 @@ def main():
     tiles_group4 = pygame.sprite.Group()
     start_group = pygame.sprite.Group()
     finish_group = pygame.sprite.Group()
+    arrows_group = pygame.sprite.Group()
 
     image1 = pygame.transform.scale(load_image('Chicken-up_stay.png'), (40, 50))  # motion animation
     image2 = pygame.transform.scale(load_image('Chicken-up_run.png'), (40, 50))  # motion animation
@@ -125,6 +128,14 @@ def main():
             self.rect = self.image.get_rect().move(
                 tile_width * pos_x + 60, tile_height * pos_y)
 
+    class Arrow(pygame.sprite.Sprite):
+        def __init__(self, tile_type, pos_x, pos_y):
+            super().__init__(arrows_group)
+            self.image = pygame.transform.scale(load_image('arrow.png'), (65, 65))
+            self.mask = pygame.mask.from_surface(self.image)
+            self.rect = self.image.get_rect().move(
+                tile_width * pos_x, tile_height * pos_y)
+
     class Bird(pygame.sprite.Sprite):
         def __init__(self, sheet, level):
             super().__init__(bird_group)
@@ -164,10 +175,14 @@ def main():
                 else:
                     self.x += 5
             if pygame.sprite.spritecollideany(self, finish_group):
-                self.x += 30
                 end.play(end_game)
                 fon_music.set_volume(0)
                 finish = 1
+            if pygame.sprite.spritecollideany(self, arrows_group):
+                    arrow.play(arrow_player)
+                    self.x += 300
+
+
 
     class Start_line(pygame.sprite.Sprite):
         def __init__(self, sheet, level):
@@ -179,7 +194,7 @@ def main():
             self.rect = self.image.get_rect()
             for y in range(len(level)):
                 for x in range(len(level[y])):
-                    if level[y][x] == '>':
+                    if level[y][x] == '/':
                         self.y = y * tile_height - 110
                         self.x = x * tile_width - 80
 
@@ -260,6 +275,8 @@ def main():
                     else:
                         Tile1('wall', x - c, y)
                         Tile4('wall', x - c, y)  # lower barriers
+                elif level[y][x] == '>':
+                    Arrow('arrow', x - c, y)
 
         # we will return the player, as well as the size of the field in cells
         return new_player, x, y
@@ -325,6 +342,7 @@ def main():
             tiles_group3 = pygame.sprite.Group()  # upper barriers
             tiles_group4 = pygame.sprite.Group()  # lower barriers
             finish_group = pygame.sprite.Group()  # lower barriers
+            arrows_group = pygame.sprite.Group()  # lower barriers
             screen.blit(bg, (0, 0))
             hero, level_x, level_y = generate_level(level_map, map_speed)
 
@@ -340,6 +358,8 @@ def main():
             finish_group.update()
             bird_group.draw(screen)
             bird_group.update()
+            arrows_group.draw(screen)
+            arrows_group.update()
         start_group.draw(screen)
         start_group.update()
 
