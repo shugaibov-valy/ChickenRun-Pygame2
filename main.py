@@ -85,6 +85,7 @@ def main():
     start_group = pygame.sprite.Group()
     finish_group = pygame.sprite.Group()
     arrows_group = pygame.sprite.Group()
+    waters_group = pygame.sprite.Group()
 
     image1 = pygame.transform.scale(load_image('ChickenRed-up_stay.png'), (40, 50))  # motion animation
     image2 = pygame.transform.scale(load_image('ChickenRed-up_run.png'), (40, 50))  # motion animation
@@ -141,6 +142,14 @@ def main():
             self.mask = pygame.mask.from_surface(self.image)
             self.rect = self.image.get_rect().move(
                 tile_width * pos_x, tile_height * pos_y - 50)
+
+    class Water(pygame.sprite.Sprite):
+        def __init__(self, tile_type, pos_x, pos_y):
+            super().__init__(waters_group)
+            self.image = pygame.transform.scale(load_image('water.png'), (100, 33))
+            self.mask = pygame.mask.from_surface(self.image)
+            self.rect = self.image.get_rect().move(
+                tile_width * pos_x, tile_height * pos_y)
 
     class Finish_line(pygame.sprite.Sprite):
         def __init__(self, tile_type, pos_x, pos_y):
@@ -206,6 +215,10 @@ def main():
             if pygame.sprite.spritecollideany(self, arrows_group):
                 arrow.play(arrow_player)
                 self.x += 240
+            if pygame.sprite.spritecollideany(self, waters_group):
+                self.x += 10
+                self.y += 20
+             #   finish = 1
 
     class Bird1(pygame.sprite.Sprite):
 
@@ -256,6 +269,9 @@ def main():
             if pygame.sprite.spritecollideany(self, arrows_group):
                 arrow.play(arrow_player)
                 self.x += 240
+            if pygame.sprite.spritecollideany(self, waters_group):
+                self.x += 10
+                self.y += 20
 
     class Start_line(pygame.sprite.Sprite):
         def __init__(self, sheet, level):
@@ -351,9 +367,11 @@ def main():
                         Tile('wall', x - c, y)  # upper blocks
                         a += 1
                     else:
-                        Tile1('wall', x - c, y)  # lower blockы
+                        Tile1('wall', x - c, y)  # lower blocks
                 elif level[y][x] == '|':
                     Finish_line('finish-line', x - c, y)
+                elif level[y][x] == '~':
+                    Water('wall', x - c, y)
                 elif level[y][x] == '!':
                     if a <= 43:
                         Tile('wall', x - c, y)
@@ -471,6 +489,7 @@ def main():
             tiles_group4 = pygame.sprite.Group()  # lower barriers
             finish_group = pygame.sprite.Group()  # lower barriers
             arrows_group = pygame.sprite.Group()  # lower barriers
+            waters_group = pygame.sprite.Group()  # lower barriers
             screen.blit(bg, (0, 0))
             hero, level_x, level_y = generate_level(level_map, map_speed)
 
@@ -488,6 +507,8 @@ def main():
             bird_group.update()
             arrows_group.draw(screen)
             arrows_group.update()
+            waters_group.draw(screen)
+            waters_group.update()
         start_group.draw(screen)
         start_group.update()
 
