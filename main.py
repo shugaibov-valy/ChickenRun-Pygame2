@@ -14,20 +14,24 @@ count_DOWN = 0
 count_UP1 = 0
 count_DOWN1 = 0
 finish = 0
-
-
+winner = 0
+d = 0
 def main():
+    global d
+    d = 0
+    global winner
     global finish
     global isUP1
     global isUP
     global count_UP
-    global count_DoWN
+    global count_DOWN
     start = pygame.mixer.Channel(0)
     fon = pygame.mixer.Channel(1)
     jump_hero = pygame.mixer.Channel(2)
     hero_in_air = pygame.mixer.Channel(3)
     end = pygame.mixer.Channel(4)
     arrow = pygame.mixer.Channel(5)
+    win = pygame.mixer.Channel(6)
     start_go = pygame.mixer.Sound('music/3, 2, 1.wav')
     fon_music = pygame.mixer.Sound('music/fon.wav')
     fon_music.set_volume(0.3)
@@ -35,6 +39,7 @@ def main():
     in_air = pygame.mixer.Sound('music/hero_in_air.wav')
     end_game = pygame.mixer.Sound('music/end_game.wav')
     arrow_player = pygame.mixer.Sound('music/arrow.wav')
+    winner_mus = pygame.mixer.Sound('music/winner.wav')
     start.play(start_go)
     fon.play(fon_music)
 
@@ -43,7 +48,7 @@ def main():
     Bird_update = 10
     screen_width = 864
     screen_height = 760
-
+    d = 0
     screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption('Chicken-Run')
 
@@ -81,17 +86,29 @@ def main():
     finish_group = pygame.sprite.Group()
     arrows_group = pygame.sprite.Group()
 
-    image1 = pygame.transform.scale(load_image('Chicken-up_stay.png'), (40, 50))  # motion animation
-    image2 = pygame.transform.scale(load_image('Chicken-up_run.png'), (40, 50))  # motion animation
+    image1 = pygame.transform.scale(load_image('ChickenRed-up_stay.png'), (40, 50))  # motion animation
+    image2 = pygame.transform.scale(load_image('ChickenRed-up_run.png'), (40, 50))  # motion animation
     images_UP = []
     images_UP.append(image1)
     images_UP.append(image2)
 
-    image3 = pygame.transform.scale(load_image('Chicken-down_stay.png'), (40, 50))  # motion animation
-    image4 = pygame.transform.scale(load_image('Chicken-down_run.png'), (40, 50))  # motion animation
+    image3 = pygame.transform.scale(load_image('ChickenRed-down_stay.png'), (40, 50))  # motion animation
+    image4 = pygame.transform.scale(load_image('ChickenRed-down_run.png'), (40, 50))  # motion animation
     images_DOWN = []
     images_DOWN.append(image3)
     images_DOWN.append(image4)
+
+    image5 = pygame.transform.scale(load_image('ChickenBlue-up_stay.png'), (40, 50))  # motion animation
+    image6 = pygame.transform.scale(load_image('ChickenBlue-up_run.png'), (40, 50))  # motion animation
+    images_UP1 = []
+    images_UP1.append(image5)
+    images_UP1.append(image6)
+
+    image7 = pygame.transform.scale(load_image('ChickenBlue-down_stay.png'), (40, 50))  # motion animation
+    image8 = pygame.transform.scale(load_image('ChickenBlue-down_run.png'), (40, 50))  # motion animation
+    images_DOWN1 = []
+    images_DOWN1.append(image7)
+    images_DOWN1.append(image8)
 
     class Tile(pygame.sprite.Sprite):
         def __init__(self, tile_type, pos_x, pos_y):
@@ -187,11 +204,11 @@ def main():
                 if winner == 0:
                     winner = 'flappy'
             if pygame.sprite.spritecollideany(self, arrows_group):
-                    arrow.play(arrow_player)
-                    self.x += 240
-
+                arrow.play(arrow_player)
+                self.x += 240
 
     class Bird1(pygame.sprite.Sprite):
+
         def __init__(self, sheet, level):
             super().__init__(bird_group)
             self.frames = []
@@ -237,9 +254,8 @@ def main():
                 if winner == 0:
                     winner = 'flappy1'
             if pygame.sprite.spritecollideany(self, arrows_group):
-                    arrow.play(arrow_player)
-                    self.x += 240
-
+                arrow.play(arrow_player)
+                self.x += 240
 
     class Start_line(pygame.sprite.Sprite):
         def __init__(self, sheet, level):
@@ -304,14 +320,14 @@ def main():
         global count_UP1
         if count_UP1 == 4:
             count_UP1 = 0
-        flappy1.image = images_UP[count_UP1 // 2]
+        flappy1.image = images_UP1[count_UP1 // 2]
         count_UP1 += 1
 
     def draw_DOWN1():  # motion animation
         global count_DOWN1
         if count_DOWN1 == 4:
             count_DOWN1 = 0
-        flappy1.image = images_DOWN[count_DOWN1 // 2]
+        flappy1.image = images_DOWN1[count_DOWN1 // 2]
         count_DOWN1 += 1
 
     def load_level(filename):
@@ -353,20 +369,24 @@ def main():
         return new_player, x, y
 
     def blur_background():
-        time.sleep(1.5)
-        rect = pygame.Rect(0, 0, 864, 760)
-        sub = screen.subsurface(rect)
-        pygame.image.save(sub, "screenshot.jpg")
-        im = Image.open('screenshot.jpg')
-        im = im.filter(ImageFilter.GaussianBlur(radius=2))  # Blur background screenshot
-        im.save('screenshot.jpg')
-        bg = pygame.image.load('screenshot.jpg')
-        screen.blit(bg, (0, 0))
+        global d
+        if d == 0:
+            time.sleep(1.5)
+            print(d)
+            rect = pygame.Rect(0, 0, 864, 760)
+            sub = screen.subsurface(rect)
+            pygame.image.save(sub, "screenshot.jpg")
+            im = Image.open('screenshot.jpg')
+            im = im.filter(ImageFilter.GaussianBlur(radius=2))  # Blur background screenshot
+            im.save('screenshot.jpg')
+            bg = pygame.image.load('screenshot.jpg')
+            screen.blit(bg, (0, 0))
+            d += 1
 
     bird_group = pygame.sprite.Group()
     level_map = load_level('map.txt')
-    flappy = Bird(pygame.transform.scale(load_image('Chicken-down_stay.png'), (40, 50)), level_map)
-    flappy1 = Bird1(pygame.transform.scale(load_image('Chicken-down_stay.png'), (40, 50)), level_map)
+    flappy = Bird(pygame.transform.scale(load_image('ChickenRed-down_stay.png'), (40, 50)), level_map)
+    flappy1 = Bird1(pygame.transform.scale(load_image('ChickenBlue-down_stay.png'), (40, 50)), level_map)
     start_line = Start_line(
         pygame.transform.rotate(pygame.transform.scale(load_image('Start-line.png'), (170, 150)), 90),
         level_map)
@@ -374,7 +394,7 @@ def main():
     bird_group.add(flappy1)
     start_group.add(start_line)
 
-    winner = 0
+
     map_speed = 1
     start = 1  # start line close
     run = True
@@ -384,7 +404,9 @@ def main():
     home_img = pygame.transform.scale(pygame.image.load('data/home.png'), (110, 110))
     restart_button = Button(screen_width // 2 + 30, screen_height // 2 - 80, restart_img)
     home_button = Button(screen_width // 2 - 120, screen_height // 2 - 90, home_img)
-
+    blur = 0
+    d = 0
+    w = 0
     while run:
         clock.tick(fps)
         if finish == 0:
@@ -393,50 +415,49 @@ def main():
                 fon_music.set_volume(0)
                 lose = 1
                 finish = 1
-                winner = 'flappy'
-                blur_background()  # blur
-            if flappy.y <= 265 and lose == 0 and finish == 0:
-                hero_in_air.play(in_air)
-                fon_music.set_volume(0)
-                lose = 1
-                finish = 1
-                winner = 'flappy'
-                blur_background()  # blur
-            if flappy.y >= 510 and lose == 0 and finish == 0:
-                hero_in_air.play(in_air)
-                fon_music.set_volume(0)
-                lose = 1
-                finish = 1
-                winner = 'flappy'
-                blur_background()  # blur
+                winner = 'flappy1'
+                blur_background()
 
+            if flappy.y <= 265 and lose == 0:
+                hero_in_air.play(in_air)
+                fon_music.set_volume(0)
+                lose = 1
+                finish = 1
+                winner = 'flappy1'
+                blur_background()  # blur
+            if flappy.y >= 510 and lose == 0:
+                hero_in_air.play(in_air)
+                fon_music.set_volume(0)
+                lose = 1
+                finish = 1
+                winner = 'flappy1'
+                blur_background()  # blur
 
             if flappy1.x < 0 and lose == 0:
                 hero_in_air.play(in_air)
                 fon_music.set_volume(0)
                 lose = 1
                 finish = 1
-                winner = 'flappy1'
+                winner = 'flappy'
                 blur_background()  # blur
+
             if flappy1.y <= 265 and lose == 0 and finish == 0:
                 hero_in_air.play(in_air)
                 fon_music.set_volume(0)
                 lose = 1
                 finish = 1
-                winner = 'flappy1'
+                winner = 'flappy'
                 blur_background()  # blur
             elif flappy1.y >= 510 and lose == 0 and finish == 0:
                 hero_in_air.play(in_air)
                 fon_music.set_volume(0)
                 lose = 1
                 finish = 1
-                winner = 'flappy1'
+                winner = 'flappy'
                 blur_background()  # blur
-
 
             flappy.update()
             flappy1.update()
-
 
             if isUP1 == False:
                 draw_DOWN1()
@@ -488,12 +509,16 @@ def main():
             win_baner = pygame.transform.scale(pygame.image.load('data/win_baner.png'), (250, 100))
             screen.blit(win_baner, (310, 80))
             if winner == 'flappy':
-                flapp = pygame.transform.scale(pygame.image.load('data/Chicken-down_stay.png'), (40, 50))
+                flapp = pygame.transform.scale(pygame.image.load('data/ChickenRed-down_stay.png'), (40, 50))
                 screen.blit(flapp, (415, 150))
 
             elif winner == 'flappy1':
-                flapp = pygame.transform.scale(pygame.image.load('data/Chicken-down_stay.png'), (40, 50))
+                flapp = pygame.transform.scale(pygame.image.load('data/ChickenBlue-down_stay.png'), (40, 50))
                 screen.blit(flapp, (415, 150))
+            if w == 0:
+                win.play(winner_mus)
+                w += 1
+            winner = 0
             flappy = 0
             flappy1 = 0
 
