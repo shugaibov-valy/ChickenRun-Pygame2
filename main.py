@@ -16,6 +16,8 @@ count_DOWN1 = 0
 finish = 0
 winner = 0
 d = 0
+
+
 def main():
     global d
     d = 0
@@ -25,23 +27,6 @@ def main():
     global isUP
     global count_UP
     global count_DOWN
-    start = pygame.mixer.Channel(0)
-    fon = pygame.mixer.Channel(1)
-    jump_hero = pygame.mixer.Channel(2)
-    hero_in_air = pygame.mixer.Channel(3)
-    end = pygame.mixer.Channel(4)
-    arrow = pygame.mixer.Channel(5)
-    win = pygame.mixer.Channel(6)
-    start_go = pygame.mixer.Sound('music/3, 2, 1.wav')
-    fon_music = pygame.mixer.Sound('music/fon.wav')
-    fon_music.set_volume(0.3)
-    jump = pygame.mixer.Sound('music/jump.wav')
-    in_air = pygame.mixer.Sound('music/hero_in_air.wav')
-    end_game = pygame.mixer.Sound('music/end_game.wav')
-    arrow_player = pygame.mixer.Sound('music/arrow.wav')
-    winner_mus = pygame.mixer.Sound('music/winner.wav')
-    start.play(start_go)
-    fon.play(fon_music)
 
     clock = pygame.time.Clock()
     fps = 31
@@ -203,7 +188,8 @@ def main():
                     else:
                         self.x += 5
             if not pygame.sprite.spritecollideany(self, tiles_group) and isUP == True:
-                if flappy.y <= flappy1.y or not pygame.sprite.spritecollideany(self, bird_group1) or flappy.y >= flappy1.y and isUP == True:
+                if flappy.y <= flappy1.y or not pygame.sprite.spritecollideany(self,
+                                                                               bird_group1) or flappy.y >= flappy1.y and isUP == True:
                     if not pygame.sprite.spritecollideany(self, tiles_group3) and isUP == True:
                         self.y -= self.vel
                     else:
@@ -220,7 +206,6 @@ def main():
             if pygame.sprite.spritecollideany(self, waters_group):
                 self.x += 10
                 self.y += 20
-
 
     class Bird1(pygame.sprite.Sprite):
         def __init__(self, sheet, level):
@@ -416,11 +401,9 @@ def main():
     bird_group1.add(flappy1)
     start_group.add(start_line)
 
-
     map_speed = 1
     start = 1  # start line close
     run = True
-    first_time = datetime.datetime.now()
     lose = 0
     restart_img = pygame.transform.scale(pygame.image.load('data/restart.png'), (95, 95))
     home_img = pygame.transform.scale(pygame.image.load('data/home.png'), (110, 110))
@@ -429,6 +412,94 @@ def main():
     blur = 0
     d = 0
     w = 0
+
+    def terminate():
+        pygame.quit()
+        sys.exit()
+
+    def loading():
+        loading_fons = []
+        loading = 0
+        loading_time = 0
+        fon1 = pygame.transform.scale(load_image('Loading1.png'), (864, 760))
+        loading_fons.append(fon1)
+        fon2 = pygame.transform.scale(load_image('Loading2.png'), (864, 760))
+        loading_fons.append(fon2)
+        while loading_time < 40:
+            screen.blit(loading_fons[loading], (0, 0))
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+            pygame.display.flip()
+            if loading <= 1:
+                clock.tick(10)
+                loading += 1
+            if loading == 2:
+                loading = 0
+            loading_time += 1
+
+    def start_screen():
+        global run
+        loading_use = 0
+        count_fon = 0
+        start_fons = []
+        fon0 = pygame.transform.scale(load_image('START1.png'), (864, 760))
+        start_fons.append(fon0)
+        fon2 = pygame.transform.scale(load_image('Chicken_anim_fon1.png'), (864, 760))
+        start_fons.append(fon2)
+        fon3 = pygame.transform.scale(load_image('Chicken_anim_fon2.png'), (864, 760))
+        start_fons.append(fon3)
+        fon4 = pygame.transform.scale(load_image('Chicken_anim_fon3.png'), (864, 760))
+        start_fons.append(fon4)
+        fon5 = pygame.transform.scale(load_image('Chicken_anim_fon4.png'), (864, 760))
+        start_fons.append(fon5)
+        while True:
+            screen.blit(start_fons[count_fon], (0, 0))
+            for event in pygame.event.get():
+                if count_fon > 1:
+                    if event.type == pygame.QUIT:
+                        terminate()
+                    elif event.type == pygame.KEYDOWN or \
+                            event.type == pygame.MOUSEBUTTONDOWN:
+
+                        #                        pygame.mixer.music.play(loops=0, start=0.0)
+                        run = True
+                        return
+            pygame.display.flip()
+            if count_fon <= 1:
+                clock.tick(0.5)
+                count_fon += 1
+            if loading_use < 1:
+                clock.tick(0.5)
+                loading()
+                loading_use += 1
+            if count_fon > 1:
+                clock.tick(2)
+                count_fon += 1
+            if count_fon > 5:
+                count_fon = 2
+
+    start_screen()
+
+    start = pygame.mixer.Channel(0)
+    fon = pygame.mixer.Channel(1)
+    jump_hero = pygame.mixer.Channel(2)
+    hero_in_air = pygame.mixer.Channel(3)
+    end = pygame.mixer.Channel(4)
+    arrow = pygame.mixer.Channel(5)
+    win = pygame.mixer.Channel(6)
+    start_go = pygame.mixer.Sound('music/3, 2, 1.wav')
+    fon_music = pygame.mixer.Sound('music/fon.wav')
+    fon_music.set_volume(0.3)
+    jump = pygame.mixer.Sound('music/jump.wav')
+    in_air = pygame.mixer.Sound('music/hero_in_air.wav')
+    end_game = pygame.mixer.Sound('music/end_game.wav')
+    arrow_player = pygame.mixer.Sound('music/arrow.wav')
+    winner_mus = pygame.mixer.Sound('music/winner.wav')
+    start.play(start_go)
+    fon.play(fon_music)
+
+    first_time = datetime.datetime.now()
     while run:
         clock.tick(fps)
         if finish == 0:
@@ -573,8 +644,56 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONDOWN and finish == 1:
                 if 562 >= event.pos[0] >= 462 and 300 <= event.pos[1] <= 400:  # PUSH RESTART
+                    end_game.set_volume(0)
                     finish = 0
-                    main()  # RESTART
+                    bird_group = pygame.sprite.Group()
+                    bird_group1 = pygame.sprite.Group()
+                    level_map = load_level('map.txt')
+                    flappy = Bird(pygame.transform.scale(load_image('ChickenRed-down_stay.png'), (40, 50)), level_map)
+                    flappy1 = Bird1(pygame.transform.scale(load_image('ChickenBlue-down_stay.png'), (40, 50)),
+                                    level_map)
+                    start_line = Start_line(
+                        pygame.transform.rotate(pygame.transform.scale(load_image('Start-line.png'), (170, 150)), 90),
+                        level_map)
+                    bird_group.add(flappy)
+                    bird_group1.add(flappy1)
+                    start_group.add(start_line)
+
+                    map_speed = 1
+                    start = 1  # start line close
+                    # run = True
+                    lose = 0
+                    restart_img = pygame.transform.scale(pygame.image.load('data/restart.png'), (95, 95))
+                    home_img = pygame.transform.scale(pygame.image.load('data/home.png'), (110, 110))
+                    restart_button = Button(screen_width // 2 + 30, screen_height // 2 - 80, restart_img)
+                    home_button = Button(screen_width // 2 - 120, screen_height // 2 - 90, home_img)
+                    blur = 0
+                    d = 0
+                    w = 0
+                    first_time = datetime.datetime.now()
+
+                    start = pygame.mixer.Channel(0)
+                    fon = pygame.mixer.Channel(1)
+                    jump_hero = pygame.mixer.Channel(2)
+                    hero_in_air = pygame.mixer.Channel(3)
+                    end = pygame.mixer.Channel(4)
+                    arrow = pygame.mixer.Channel(5)
+                    win = pygame.mixer.Channel(6)
+                    start_go = pygame.mixer.Sound('music/3, 2, 1.wav')
+                    fon_music = pygame.mixer.Sound('music/fon.wav')
+                    fon_music.set_volume(0.3)
+                    jump = pygame.mixer.Sound('music/jump.wav')
+                    in_air = pygame.mixer.Sound('music/hero_in_air.wav')
+                    end_game = pygame.mixer.Sound('music/end_game.wav')
+                    arrow_player = pygame.mixer.Sound('music/arrow.wav')
+                    winner_mus = pygame.mixer.Sound('music/winner.wav')
+                    start.play(start_go)
+                    fon.play(fon_music)
+
+                    run = True  # RESTART
+                elif 462 >= event.pos[0] >= 320 and 300 <= event.pos[1] <= 400:
+                    pygame.quit()
+                    sys.exit()
 
         pygame.display.update()
     pygame.quit()
