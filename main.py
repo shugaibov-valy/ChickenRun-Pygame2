@@ -130,7 +130,7 @@ def main():
     class Tile3(pygame.sprite.Sprite):
         def __init__(self, tile_type, pos_x, pos_y):
             super().__init__(tiles_group3)
-            self.image = load_image('box.jpg')
+            self.image = pygame.transform.scale(load_image('box.jpg'), (40, 40))
             self.mask = pygame.mask.from_surface(self.image)
             self.rect = self.image.get_rect().move(
                 tile_width * pos_x, tile_height * pos_y + 30)
@@ -138,10 +138,10 @@ def main():
     class Tile4(pygame.sprite.Sprite):
         def __init__(self, tile_type, pos_x, pos_y):
             super().__init__(tiles_group4)
-            self.image = load_image('box.jpg')
+            self.image = pygame.transform.scale(load_image('box.jpg'), (40, 40))
             self.mask = pygame.mask.from_surface(self.image)
             self.rect = self.image.get_rect().move(
-                tile_width * pos_x, tile_height * pos_y - 50)
+                tile_width * pos_x, tile_height * pos_y - 30)
 
     class Water(pygame.sprite.Sprite):
         def __init__(self, tile_type, pos_x, pos_y):
@@ -162,7 +162,7 @@ def main():
     class Arrow(pygame.sprite.Sprite):
         def __init__(self, tile_type, pos_x, pos_y):
             super().__init__(arrows_group)
-            self.image = pygame.transform.scale(load_image('arrow.png'), (65, 65))
+            self.image = pygame.transform.scale(load_image('arrow.png'), (85, 85))
             self.mask = pygame.mask.from_surface(self.image)
             self.rect = self.image.get_rect().move(
                 tile_width * pos_x, tile_height * pos_y)
@@ -178,7 +178,7 @@ def main():
             self.rect = self.image.get_rect()
             for y in range(len(level)):
                 for x in range(len(level[y])):
-                    if level[y][x] == '@':
+                    if level[y][x] == '$':
                         self.y = y * tile_height
                         self.x = x * tile_width
 
@@ -197,15 +197,17 @@ def main():
             if isUP == True:
                 draw_UP()
             if not pygame.sprite.spritecollideany(self, tiles_group1) and isUP == False:
-                if not pygame.sprite.spritecollideany(self, tiles_group4) and isUP == False:
-                    self.y += self.vel
-                else:
-                    self.x += 5
+                if flappy.y >= flappy1.y or not pygame.sprite.spritecollideany(self, bird_group1) and isUP == False:
+                    if not pygame.sprite.spritecollideany(self, tiles_group4) and isUP == False:
+                        self.y += self.vel
+                    else:
+                        self.x += 5
             if not pygame.sprite.spritecollideany(self, tiles_group) and isUP == True:
-                if not pygame.sprite.spritecollideany(self, tiles_group3) and isUP == True:
-                    self.y -= self.vel
-                else:
-                    self.x += 5
+                if flappy.y <= flappy1.y or not pygame.sprite.spritecollideany(self, bird_group1) or flappy.y >= flappy1.y and isUP == True:
+                    if not pygame.sprite.spritecollideany(self, tiles_group3) and isUP == True:
+                        self.y -= self.vel
+                    else:
+                        self.x += 5
             if pygame.sprite.spritecollideany(self, finish_group):
                 end.play(end_game)
                 fon_music.set_volume(0)
@@ -218,12 +220,11 @@ def main():
             if pygame.sprite.spritecollideany(self, waters_group):
                 self.x += 10
                 self.y += 20
-             #   finish = 1
+
 
     class Bird1(pygame.sprite.Sprite):
-
         def __init__(self, sheet, level):
-            super().__init__(bird_group)
+            super().__init__(bird_group1)
             self.frames = []
             self.image = sheet
             self.x = 0
@@ -251,15 +252,17 @@ def main():
             if isUP1 == True:
                 draw_UP1()
             if not pygame.sprite.spritecollideany(self, tiles_group1) and isUP1 == False:
-                if not pygame.sprite.spritecollideany(self, tiles_group4) and isUP1 == False:
-                    self.y += self.vel
-                else:
-                    self.x += 5
+                if flappy1.y >= flappy.y or not pygame.sprite.spritecollideany(self, bird_group) and isUP1 == False:
+                    if not pygame.sprite.spritecollideany(self, tiles_group4) and isUP1 == False:
+                        self.y += self.vel
+                    else:
+                        self.x += 5
             if not pygame.sprite.spritecollideany(self, tiles_group) and isUP1 == True:
-                if not pygame.sprite.spritecollideany(self, tiles_group3) and isUP1 == True:
-                    self.y -= self.vel
-                else:
-                    self.x += 5
+                if flappy1.y <= flappy.y or not pygame.sprite.spritecollideany(self, bird_group) and isUP1 == True:
+                    if not pygame.sprite.spritecollideany(self, tiles_group3) and isUP1 == True:
+                        self.y -= self.vel
+                    else:
+                        self.x += 5
             if pygame.sprite.spritecollideany(self, finish_group):
                 end.play(end_game)
                 fon_music.set_volume(0)
@@ -363,7 +366,7 @@ def main():
         for y in range(len(level)):
             for x in range(len(level[y])):
                 if level[y][x] == '#':
-                    if a <= 43:
+                    if a <= 40:
                         Tile('wall', x - c, y)  # upper blocks
                         a += 1
                     else:
@@ -373,7 +376,7 @@ def main():
                 elif level[y][x] == '~':
                     Water('wall', x - c, y)
                 elif level[y][x] == '!':
-                    if a <= 43:
+                    if a <= 40:
                         Tile('wall', x - c, y)
                         Tile3('wall', x - c, y)  # upper barriers
                         a += 1
@@ -402,6 +405,7 @@ def main():
             d += 1
 
     bird_group = pygame.sprite.Group()
+    bird_group1 = pygame.sprite.Group()
     level_map = load_level('map.txt')
     flappy = Bird(pygame.transform.scale(load_image('ChickenRed-down_stay.png'), (40, 50)), level_map)
     flappy1 = Bird1(pygame.transform.scale(load_image('ChickenBlue-down_stay.png'), (40, 50)), level_map)
@@ -409,7 +413,7 @@ def main():
         pygame.transform.rotate(pygame.transform.scale(load_image('Start-line.png'), (170, 150)), 90),
         level_map)
     bird_group.add(flappy)
-    bird_group.add(flappy1)
+    bird_group1.add(flappy1)
     start_group.add(start_line)
 
 
@@ -505,6 +509,8 @@ def main():
             finish_group.update()
             bird_group.draw(screen)
             bird_group.update()
+            bird_group1.draw(screen)
+            bird_group1.update()
             arrows_group.draw(screen)
             arrows_group.update()
             waters_group.draw(screen)
@@ -559,8 +565,8 @@ def main():
             if key[pygame.K_w] and isUP1 == False and finish == 0:
                 jump_hero.play(jump)
                 isUP1 = True
-                bird_group.draw(screen)
-                bird_group.update()
+                bird_group1.draw(screen)
+                bird_group1.update()
             if key[pygame.K_s] and isUP1 == True and finish == 0:
                 jump_hero.play(jump)
                 isUP1 = False
