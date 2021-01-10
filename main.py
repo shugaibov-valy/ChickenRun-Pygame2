@@ -453,7 +453,9 @@ def main():
         start_fons.append(fon4)
         fon5 = pygame.transform.scale(load_image('Chicken_anim_fon4.png'), (864, 760))
         start_fons.append(fon5)
+
         while True:
+            print(count_fon)
             screen.blit(start_fons[count_fon], (0, 0))
             for event in pygame.event.get():
                 if count_fon > 1:
@@ -476,7 +478,7 @@ def main():
             if count_fon > 1:
                 clock.tick(2)
                 count_fon += 1
-            if count_fon > 5:
+            if count_fon > 4:
                 count_fon = 2
 
     start_screen()
