@@ -5,6 +5,9 @@ import datetime
 import time
 from PIL import Image, ImageFilter
 from gif_chikens import *
+import loading_game
+import loading_map
+import start_music
 
 pygame.init()
 click_red_chicken = 'down'
@@ -17,9 +20,14 @@ count_DOWN1 = 0
 finish = 0
 winner = 0
 d = 0
+screen_width = 864
+screen_height = 760
+
+screen = pygame.display.set_mode((screen_width, screen_height))
+clock = pygame.time.Clock()
 
 
-def main():
+def main1():
     global d
     d = 0
     global winner
@@ -29,13 +37,10 @@ def main():
     global count_UP
     global count_DOWN
 
-    clock = pygame.time.Clock()
     fps = 31
-    Bird_update = 10
-    screen_width = 864
-    screen_height = 760
+
     d = 0
-    screen = pygame.display.set_mode((screen_width, screen_height))
+
     pygame.display.set_caption('Chicken-Run')
 
     # define game variables
@@ -70,10 +75,14 @@ def main():
     finish_group = pygame.sprite.Group()
     arrows_group = pygame.sprite.Group()
     waters_group = pygame.sprite.Group()
+    chick_red_group = pygame.sprite.Group()
+    chick_blue_group = pygame.sprite.Group()
 
     tile_images = {
         'wall': load_image('ground.jpg'),
-        'finish-line': pygame.transform.scale(load_image('Finish-line.png'), (95, 230))
+        'barrier': pygame.transform.scale(load_image('box.jpg'), (40, 40)),
+        'water': pygame.transform.scale(load_image('water.png'), (100, 33)),
+        'arrow': pygame.transform.scale(load_image('arrow.png'), (85, 85))
     }
 
     class UpperEarth(pygame.sprite.Sprite):
@@ -108,33 +117,28 @@ def main():
             self.rect = self.image.get_rect().move(
                 tile_width * pos_x, tile_height * pos_y - 30)
 
-    class Water(pygame.sprite.Sprite):
-        def __init__(self, pos_x, pos_y):
-            super().__init__(waters_group)
-            self.image = pygame.transform.scale(load_image('water.png'), (100, 33))
+    class Barrier(pygame.sprite.Sprite):
+        def __init__(self, tile_types, pos_x, pos_y):
+            self.image = tile_images[tile_types]
             self.mask = pygame.mask.from_surface(self.image)
             self.rect = self.image.get_rect().move(
                 tile_width * pos_x, tile_height * pos_y)
+            if tile_types == 'water':
+                super().__init__(waters_group)
+            elif tile_types == 'arrow':
+                super().__init__(arrows_group)
 
     class Finish_line(pygame.sprite.Sprite):
         def __init__(self, tile_type, pos_x, pos_y):
             super().__init__(finish_group)
-            self.image = tile_images[tile_type]
+            self.image = pygame.transform.scale(load_image('Finish-line.png'), (95, 230))
             self.mask = pygame.mask.from_surface(self.image)
             self.rect = self.image.get_rect().move(
                 tile_width * pos_x + 60, tile_height * pos_y)
 
-    class Arrow(pygame.sprite.Sprite):
-        def __init__(self, pos_x, pos_y):
-            super().__init__(arrows_group)
-            self.image = pygame.transform.scale(load_image('arrow.png'), (85, 85))
-            self.mask = pygame.mask.from_surface(self.image)
-            self.rect = self.image.get_rect().move(
-                tile_width * pos_x, tile_height * pos_y)
-
-    class Bird(pygame.sprite.Sprite):
+    class ChickenRed(pygame.sprite.Sprite):
         def __init__(self, sheet, level):
-            super().__init__(bird_group)
+            super().__init__(chick_red_group)
             self.frames = []
             self.image = sheet
             self.x = 0
@@ -163,34 +167,34 @@ def main():
                 draw_chicken_red_up()
             if not pygame.sprite.spritecollideany(self, low_earth_group) and click_red_chicken == 'down':
                 if chicken_red.y >= chicken_blue.y or not pygame.sprite.spritecollideany(self,
-                                                                                         bird_group1) and click_red_chicken == 'down':
+                                                                                         chick_blue_group) and click_red_chicken == 'down':
                     if not pygame.sprite.spritecollideany(self, low_barrier_box_group) and click_red_chicken == 'down':
                         self.y += self.vel
                     else:
                         self.x += 5
             if not pygame.sprite.spritecollideany(self, up_earth_group) and click_red_chicken == 'up':
                 if chicken_red.y <= chicken_blue.y or not pygame.sprite.spritecollideany(self,
-                                                                                         bird_group1) or chicken_red.y >= chicken_blue.y and click_red_chicken == 'up':
+                                                                                         chick_blue_group) or chicken_red.y >= chicken_blue.y and click_red_chicken == 'up':
                     if not pygame.sprite.spritecollideany(self, up_barrier_box_group) and click_red_chicken == 'up':
                         self.y -= self.vel
                     else:
                         self.x += 5
             if pygame.sprite.spritecollideany(self, finish_group):
-                end.play(end_game)
-                fon_music.set_volume(0)
+                start_music.end.play(start_music.end_game)
+                start_music.fon_music.set_volume(0)
                 finish = 1
                 if winner == 0:
                     winner = 'chicken_red'
             if pygame.sprite.spritecollideany(self, arrows_group):
-                arrow.play(arrow_player)
+                start_music.arrow.play(start_music.arrow_player)
                 self.x += 240
             if pygame.sprite.spritecollideany(self, waters_group):
                 self.x += 10
                 self.y += 20
 
-    class Bird1(pygame.sprite.Sprite):
+    class ChickenBlue(pygame.sprite.Sprite):
         def __init__(self, sheet, level):
-            super().__init__(bird_group1)
+            super().__init__(chick_blue_group)
             self.frames = []
             self.image = sheet
             self.x = 0
@@ -219,26 +223,26 @@ def main():
                 draw_chicken_blue_up()
             if not pygame.sprite.spritecollideany(self, low_earth_group) and click_blue_chicken == 'down':
                 if chicken_blue.y >= chicken_red.y or not pygame.sprite.spritecollideany(self,
-                                                                                         bird_group) and click_blue_chicken == 'down':
+                                                                                         chick_red_group) and click_blue_chicken == 'down':
                     if not pygame.sprite.spritecollideany(self, low_barrier_box_group) and click_blue_chicken == 'down':
                         self.y += self.vel
                     else:
                         self.x += 5
             if not pygame.sprite.spritecollideany(self, up_earth_group) and click_blue_chicken == 'up':
                 if chicken_blue.y <= chicken_red.y or not pygame.sprite.spritecollideany(self,
-                                                                                         bird_group) and click_blue_chicken == 'up':
+                                                                                         chick_red_group) and click_blue_chicken == 'up':
                     if not pygame.sprite.spritecollideany(self, up_barrier_box_group) and click_blue_chicken == 'up':
                         self.y -= self.vel
                     else:
                         self.x += 5
             if pygame.sprite.spritecollideany(self, finish_group):
-                end.play(end_game)
-                fon_music.set_volume(0)
+                start_music.end.play(start_music.end_game)
+                start_music.fon_music.set_volume(0)
                 finish = 1
                 if winner == 0:
                     winner = 'chicken_blue'
             if pygame.sprite.spritecollideany(self, arrows_group):
-                arrow.play(arrow_player)
+                start_music.arrow.play(start_music.arrow_player)
                 self.x += 240
             if pygame.sprite.spritecollideany(self, waters_group):
                 self.x += 10
@@ -261,7 +265,7 @@ def main():
         def update(self):
             self.rect = self.image.get_rect().move(self.x, self.y)
 
-    class Button():
+    class Button:
         def __init__(self, x, y, image):
             self.image = image
             self.rect = self.image.get_rect()
@@ -284,7 +288,6 @@ def main():
             if pygame.mouse.get_pressed()[0] == 0:
                 self.clicked = False
 
-            # draw button
             screen.blit(self.image, self.rect)
 
             return action
@@ -317,17 +320,6 @@ def main():
         chicken_blue.image = chicken_blue_down_gif[count_DOWN1 // 2]
         count_DOWN1 += 1
 
-    def load_level(filename):
-        filename = "data/" + filename
-        # reading the level by removing newline characters
-        with open(filename, 'r') as mapFile:
-            level_map = [line.strip() for line in mapFile]
-        # and calculate the maximum length
-        max_width = max(map(len, level_map))
-
-        # complete each line with empty cells ('.')
-        return list(map(lambda x: x.ljust(max_width, '.'), level_map))
-
     def generate_level(level, c):
         a = 0
         new_player, x, y = None, None, None
@@ -342,7 +334,7 @@ def main():
                 elif level[y][x] == '|':
                     Finish_line('finish-line', x - c, y)
                 elif level[y][x] == '~':
-                    Water(x - c, y)
+                    Barrier('water', x - c, y)
                 elif level[y][x] == '!':
                     if a <= 40:
                         UpperEarth('wall', x - c, y)
@@ -352,7 +344,7 @@ def main():
                         LowerEarth('wall', x - c, y)
                         LowerBarrierBox(x - c, y)  # lower barriers
                 elif level[y][x] == '>':
-                    Arrow(x - c, y)
+                    Barrier('arrow', x - c, y)
 
         # we will return the player, as well as the size of the field in cells
         return new_player, x, y
@@ -372,16 +364,14 @@ def main():
             screen.blit(bg, (0, 0))
             d += 1
 
-    bird_group = pygame.sprite.Group()
-    bird_group1 = pygame.sprite.Group()
-    level_map = load_level('map.txt')
-    chicken_red = Bird(pygame.transform.scale(load_image('ChickenRed-down_stay.png'), (40, 50)), level_map)
-    chicken_blue = Bird1(pygame.transform.scale(load_image('ChickenBlue-down_stay.png'), (40, 50)), level_map)
+    level_map = loading_map.load_level('map.txt')
+    chicken_red = ChickenRed(pygame.transform.scale(load_image('ChickenRed-down_stay.png'), (40, 50)), level_map)
+    chicken_blue = ChickenBlue(pygame.transform.scale(load_image('ChickenBlue-down_stay.png'), (40, 50)), level_map)
     start_line = Start_line(
         pygame.transform.rotate(pygame.transform.scale(load_image('Start-line.png'), (170, 150)), 90),
         level_map)
-    bird_group.add(chicken_red)
-    bird_group1.add(chicken_blue)
+    chick_red_group.add(chicken_red)
+    chick_blue_group.add(chicken_blue)
     start_group.add(start_line)
 
     map_speed = 1
@@ -393,144 +383,35 @@ def main():
     restart_button = Button(screen_width // 2 + 30, screen_height // 2 - 80, restart_img)
     home_button = Button(screen_width // 2 - 120, screen_height // 2 - 90, home_img)
     blur = 0
+
     d = 0
     w = 0
 
-    def terminate():
-        pygame.quit()
-        sys.exit()
+    loading_game.start_screen()  # START GAME LOADING
 
-    def loading():
-        loading_fons = []
-        loading = 0
-        loading_time = 0
-        fon1 = pygame.transform.scale(load_image('Loading1.png'), (864, 760))
-        loading_fons.append(fon1)
-        fon2 = pygame.transform.scale(load_image('Loading2.png'), (864, 760))
-        loading_fons.append(fon2)
-        while loading_time < 40:
-            screen.blit(loading_fons[loading], (0, 0))
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    terminate()
-            pygame.display.flip()
-            if loading <= 1:
-                clock.tick(10)
-                loading += 1
-            if loading == 2:
-                loading = 0
-            loading_time += 1
-
-    def start_screen():
-        global run
-        loading_use = 0
-        count_fon = 0
-        start_fons = []
-        fon0 = pygame.transform.scale(load_image('START1.png'), (864, 760))
-        start_fons.append(fon0)
-        fon2 = pygame.transform.scale(load_image('Chicken_anim_fon1.png'), (864, 760))
-        start_fons.append(fon2)
-        fon3 = pygame.transform.scale(load_image('Chicken_anim_fon2.png'), (864, 760))
-        start_fons.append(fon3)
-        fon4 = pygame.transform.scale(load_image('Chicken_anim_fon3.png'), (864, 760))
-        start_fons.append(fon4)
-        fon5 = pygame.transform.scale(load_image('Chicken_anim_fon4.png'), (864, 760))
-        start_fons.append(fon5)
-
-        while True:
-            print(count_fon)
-            screen.blit(start_fons[count_fon], (0, 0))
-            for event in pygame.event.get():
-                if count_fon > 1:
-                    if event.type == pygame.QUIT:
-                        terminate()
-                    elif event.type == pygame.KEYDOWN or \
-                            event.type == pygame.MOUSEBUTTONDOWN:
-
-                        #                        pygame.mixer.music.play(loops=0, start=0.0)
-                        run = True
-                        return
-            pygame.display.flip()
-            if count_fon <= 1:
-                clock.tick(0.5)
-                count_fon += 1
-            if loading_use < 1:
-                clock.tick(0.5)
-                loading()
-                loading_use += 1
-            if count_fon > 1:
-                clock.tick(2)
-                count_fon += 1
-            if count_fon > 4:
-                count_fon = 2
-
-    start_screen()
-
-    start = pygame.mixer.Channel(0)
-    fon = pygame.mixer.Channel(1)
-    jump_hero = pygame.mixer.Channel(2)
-    hero_in_air = pygame.mixer.Channel(3)
-    end = pygame.mixer.Channel(4)
-    arrow = pygame.mixer.Channel(5)
-    win = pygame.mixer.Channel(6)
-    start_go = pygame.mixer.Sound('music/3, 2, 1.wav')
-    fon_music = pygame.mixer.Sound('music/fon.wav')
-    fon_music.set_volume(0.3)
-    jump = pygame.mixer.Sound('music/jump.wav')
-    in_air = pygame.mixer.Sound('music/hero_in_air.wav')
-    end_game = pygame.mixer.Sound('music/end_game.wav')
-    arrow_player = pygame.mixer.Sound('music/arrow.wav')
-    winner_mus = pygame.mixer.Sound('music/winner.wav')
-    start.play(start_go)
-    fon.play(fon_music)
+    start_music.mixers_music()  # GAME MUSIC
 
     first_time = datetime.datetime.now()
+
+    def in_air_game_over():
+        global lose
+        global finish
+        start_music.hero_in_air.play(start_music.in_air)  # GAME OVER MUSIC
+        start_music.fon_music.set_volume(0)
+        lose = 1
+        finish = 1
+
     while run:
+
         clock.tick(fps)
         if finish == 0:
-            if chicken_red.x < 0 and lose == 0:
-                hero_in_air.play(in_air)
-                fon_music.set_volume(0)
-                lose = 1
-                finish = 1
-                winner = 'chicken_blue'
-                blur_background()
-
-            if chicken_red.y <= 265 and lose == 0:
-                hero_in_air.play(in_air)
-                fon_music.set_volume(0)
-                lose = 1
-                finish = 1
-                winner = 'chicken_blue'
-                blur_background()  # blur
-            if chicken_red.y >= 510 and lose == 0:
-                hero_in_air.play(in_air)
-                fon_music.set_volume(0)
-                lose = 1
-                finish = 1
+            if chicken_red.x < 0 or chicken_red.y <= 265 or chicken_red.y >= 510 and lose == 0:
+                in_air_game_over()  # GAME OVER
                 winner = 'chicken_blue'
                 blur_background()  # blur
 
-            if chicken_blue.x < 0 and lose == 0:
-                hero_in_air.play(in_air)
-                fon_music.set_volume(0)
-                lose = 1
-                finish = 1
-                winner = 'chicken_red'
-                blur_background()  # blur
-
-            if chicken_blue.y <= 265 and lose == 0 and finish == 0:
-                hero_in_air.play(in_air)
-                fon_music.set_volume(0)
-                lose = 1
-                finish = 1
-                winner = 'chicken_red'
-                blur_background()  # blur
-            elif chicken_blue.y >= 510 and lose == 0 and finish == 0:
-                hero_in_air.play(in_air)
-                fon_music.set_volume(0)
-                lose = 1
-                finish = 1
+            if chicken_blue.x < 0 or chicken_blue.y <= 265 or chicken_blue.y >= 510 and lose == 0:
+                in_air_game_over()  # GAME OVER
                 winner = 'chicken_red'
                 blur_background()  # blur
 
@@ -538,9 +419,9 @@ def main():
             chicken_blue.update()
 
             if click_blue_chicken == 'down':
-                draw_chicken_blue_down()
+                draw_chicken_blue_down()  # gif blue chicken
 
-            if click_red_chicken == 'down':
+            if click_red_chicken == 'down':  # gif red chicken
                 draw_chicken_red_down()
             # draw background
             up_earth_group = pygame.sprite.Group()  # upper blocks
@@ -553,6 +434,7 @@ def main():
             screen.blit(bg, (0, 0))
             hero, level_x, level_y = generate_level(level_map, map_speed)
 
+            #            update_create_sprites.update()  # UPDATE SPRITES
             up_earth_group.draw(screen)
             up_earth_group.update()
             low_earth_group.draw(screen)
@@ -563,10 +445,10 @@ def main():
             low_barrier_box_group.update()
             finish_group.draw(screen)
             finish_group.update()
-            bird_group.draw(screen)
-            bird_group.update()
-            bird_group1.draw(screen)
-            bird_group1.update()
+            chick_red_group.draw(screen)
+            chick_red_group.update()
+            chick_blue_group.draw(screen)
+            chick_blue_group.update()
             arrows_group.draw(screen)
             arrows_group.update()
             waters_group.draw(screen)
@@ -599,7 +481,7 @@ def main():
                 flapp = pygame.transform.scale(pygame.image.load('data/ChickenBlue-down_stay.png'), (40, 50))
                 screen.blit(flapp, (415, 150))
             if w == 0:
-                win.play(winner_mus)
+                start_music.win.play(start_music.winner_mus)
                 w += 1
             winner = 0
             chicken_red = 0
@@ -610,39 +492,36 @@ def main():
                 run = False
             key = pygame.key.get_pressed()
             if key[pygame.K_UP] and click_red_chicken == 'down' and finish == 0:
-                jump_hero.play(jump)
+                start_music.jump_hero.play(start_music.jump)
                 click_red_chicken = 'up'
-                bird_group.draw(screen)
-                bird_group.update()
-            if key[pygame.K_DOWN] and click_red_chicken == 'up' and finish == 0:
-                jump_hero.play(jump)
+            elif key[pygame.K_DOWN] and click_red_chicken == 'up' and finish == 0:
+                start_music.jump_hero.play(start_music.jump)
                 click_red_chicken = 'down'
 
-            if key[pygame.K_w] and click_blue_chicken == 'down' and finish == 0:
-                jump_hero.play(jump)
+            elif key[pygame.K_w] and click_blue_chicken == 'down' and finish == 0:
+                start_music.jump_hero.play(start_music.jump)
                 click_blue_chicken = 'up'
-                bird_group1.draw(screen)
-                bird_group1.update()
-            if key[pygame.K_s] and click_blue_chicken == 'up' and finish == 0:
-                jump_hero.play(jump)
+            elif key[pygame.K_s] and click_blue_chicken == 'up' and finish == 0:
+                start_music.jump_hero.play(start_music.jump)
                 click_blue_chicken = 'down'
 
             if event.type == pygame.MOUSEBUTTONDOWN and finish == 1:
                 if 562 >= event.pos[0] >= 462 and 300 <= event.pos[1] <= 400:  # PUSH RESTART
-                    end_game.set_volume(0)
+                    start_music.end_game.set_volume(0)
                     finish = 0
-                    bird_group = pygame.sprite.Group()
-                    bird_group1 = pygame.sprite.Group()
-                    level_map = load_level('map.txt')
-                    chicken_red = Bird(pygame.transform.scale(load_image('ChickenRed-down_stay.png'), (40, 50)),
-                                       level_map)
-                    chicken_blue = Bird1(pygame.transform.scale(load_image('ChickenBlue-down_stay.png'), (40, 50)),
-                                         level_map)
+                    chick_red_group = pygame.sprite.Group()
+                    chick_blue_group = pygame.sprite.Group()
+                    level_map = loading_map.load_level('map.txt')
+                    chicken_red = ChickenRed(pygame.transform.scale(load_image('ChickenRed-down_stay.png'), (40, 50)),
+                                             level_map)
+                    chicken_blue = ChickenBlue(
+                        pygame.transform.scale(load_image('ChickenBlue-down_stay.png'), (40, 50)),
+                        level_map)
                     start_line = Start_line(
                         pygame.transform.rotate(pygame.transform.scale(load_image('Start-line.png'), (170, 150)), 90),
                         level_map)
-                    bird_group.add(chicken_red)
-                    bird_group1.add(chicken_blue)
+                    chick_red_group.add(chicken_red)
+                    chick_blue_group.add(chicken_blue)
                     start_group.add(start_line)
 
                     map_speed = 1
@@ -658,23 +537,7 @@ def main():
                     w = 0
                     first_time = datetime.datetime.now()
 
-                    start = pygame.mixer.Channel(0)
-                    fon = pygame.mixer.Channel(1)
-                    jump_hero = pygame.mixer.Channel(2)
-                    hero_in_air = pygame.mixer.Channel(3)
-                    end = pygame.mixer.Channel(4)
-                    arrow = pygame.mixer.Channel(5)
-                    win = pygame.mixer.Channel(6)
-                    start_go = pygame.mixer.Sound('music/3, 2, 1.wav')
-                    fon_music = pygame.mixer.Sound('music/fon.wav')
-                    fon_music.set_volume(0.3)
-                    jump = pygame.mixer.Sound('music/jump.wav')
-                    in_air = pygame.mixer.Sound('music/hero_in_air.wav')
-                    end_game = pygame.mixer.Sound('music/end_game.wav')
-                    arrow_player = pygame.mixer.Sound('music/arrow.wav')
-                    winner_mus = pygame.mixer.Sound('music/winner.wav')
-                    start.play(start_go)
-                    fon.play(fon_music)
+                    start_music.mixers_music()  # GAME MUSIC
 
                     run = True  # RESTART
                 elif 462 >= event.pos[0] >= 320 and 300 <= event.pos[1] <= 400:  # PUSH HOME
@@ -686,4 +549,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main1()
