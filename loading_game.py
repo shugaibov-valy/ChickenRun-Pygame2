@@ -3,7 +3,6 @@ import os
 import sys
 from main import *
 
-
 def terminate():
     pygame.quit()
     sys.exit()
