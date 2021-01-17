@@ -13,12 +13,12 @@ pygame.init()
 click_red_chicken = 'down'
 click_blue_chicken = 'down'
 
-count_UP = 0
+count_UP = 0  # crutch
 count_DOWN = 0
 count_UP1 = 0
 count_DOWN1 = 0
 finish = 0
-winner = 0
+winner = 0  # crutch
 d = 0
 screen_width = 864
 screen_height = 760
@@ -29,7 +29,6 @@ clock = pygame.time.Clock()
 
 def main1():
     global d
-    d = 0
     global winner
     global finish
     global click_red_chicken
@@ -66,23 +65,25 @@ def main1():
     tile_width = tile_height = 50
 
     gif_chickens()
-
     up_earth_group = pygame.sprite.Group()
     low_earth_group = pygame.sprite.Group()
     up_barrier_box_group = pygame.sprite.Group()
     low_barrier_box_group = pygame.sprite.Group()
     start_group = pygame.sprite.Group()
-    finish_group = pygame.sprite.Group()
-    arrows_group = pygame.sprite.Group()
-    waters_group = pygame.sprite.Group()
+    finish_group = pygame.sprite.Group()  # FINISH LINE
+    arrows_group = pygame.sprite.Group()  # ARROWS
+    waters_group = pygame.sprite.Group()  # WATERS
     chick_red_group = pygame.sprite.Group()
     chick_blue_group = pygame.sprite.Group()
+    up_barrier_twin_box_group = pygame.sprite.Group()
+    low_barrier_twin_box_group = pygame.sprite.Group()
 
     tile_images = {
         'wall': load_image('ground.jpg'),
-        'barrier': pygame.transform.scale(load_image('box.jpg'), (40, 40)),
+        'box_up': pygame.transform.scale(load_image('box.jpg'), (40, 40)),
+        'box_low': pygame.transform.scale(load_image('box.jpg'), (40, 40)),
         'water': pygame.transform.scale(load_image('water.png'), (100, 33)),
-        'arrow': pygame.transform.scale(load_image('arrow.png'), (85, 85))
+        'arrow': pygame.transform.scale(load_image('arrow.png'), (85, 85)),
     }
 
     class UpperEarth(pygame.sprite.Sprite):
@@ -104,15 +105,15 @@ def main1():
     class UpperBarrierBox(pygame.sprite.Sprite):
         def __init__(self, pos_x, pos_y):
             super().__init__(up_barrier_box_group)
-            self.image = pygame.transform.scale(load_image('box.jpg'), (40, 40))
+            self.image = pygame.transform.scale(load_image('box.jpg'), (50, 35))
             self.mask = pygame.mask.from_surface(self.image)
             self.rect = self.image.get_rect().move(
-                tile_width * pos_x, tile_height * pos_y + 30)
+                tile_width * pos_x - 10, tile_height * pos_y + 30)
 
     class LowerBarrierBox(pygame.sprite.Sprite):
         def __init__(self, pos_x, pos_y):
             super().__init__(low_barrier_box_group)
-            self.image = pygame.transform.scale(load_image('box.jpg'), (40, 40))
+            self.image = pygame.transform.scale(load_image('box.jpg'), (50, 35))
             self.mask = pygame.mask.from_surface(self.image)
             self.rect = self.image.get_rect().move(
                 tile_width * pos_x, tile_height * pos_y - 30)
@@ -127,6 +128,18 @@ def main1():
                 super().__init__(waters_group)
             elif tile_types == 'arrow':
                 super().__init__(arrows_group)
+            elif tile_types == 'box_up':
+                self.image = pygame.transform.rotate(pygame.transform.scale(load_image('box2.jpg'), (70, 50)), 90)
+                self.mask = pygame.mask.from_surface(self.image)
+                self.rect = self.image.get_rect().move(
+                    tile_width * pos_x - 10, tile_height * pos_y + 30)
+                super().__init__(up_barrier_twin_box_group)
+            elif tile_types == 'box_low':
+                self.image = pygame.transform.rotate(pygame.transform.scale(load_image('box2.jpg'), (70, 50)), 90)
+                self.mask = pygame.mask.from_surface(self.image)
+                self.rect = self.image.get_rect().move(
+                    tile_width * pos_x - 10, tile_height * pos_y - 60)
+                super().__init__(low_barrier_twin_box_group)
 
     class Finish_line(pygame.sprite.Sprite):
         def __init__(self, tile_type, pos_x, pos_y):
@@ -136,7 +149,7 @@ def main1():
             self.rect = self.image.get_rect().move(
                 tile_width * pos_x + 60, tile_height * pos_y)
 
-    class ChickenRed(pygame.sprite.Sprite):
+    class ChickenRed(pygame.sprite.Sprite):  # CHICKEN RED
         def __init__(self, sheet, level):
             super().__init__(chick_red_group)
             self.frames = []
@@ -156,7 +169,11 @@ def main1():
             global winner
             if start == 0:
                 self.x += 0.4
-            if pygame.sprite.spritecollideany(self, up_barrier_box_group):
+            if pygame.sprite.spritecollideany(self, up_barrier_twin_box_group):  # collision
+                self.x -= 5
+            if pygame.sprite.spritecollideany(self, low_barrier_twin_box_group):  # collision
+                self.x -= 5
+            if pygame.sprite.spritecollideany(self, up_barrier_box_group):  # collision
                 self.x -= 5
 
             if pygame.sprite.spritecollideany(self, low_barrier_box_group):
@@ -168,19 +185,24 @@ def main1():
             if not pygame.sprite.spritecollideany(self, low_earth_group) and click_red_chicken == 'down':
                 if chicken_red.y >= chicken_blue.y or not pygame.sprite.spritecollideany(self,
                                                                                          chick_blue_group) and click_red_chicken == 'down':
-                    if not pygame.sprite.spritecollideany(self, low_barrier_box_group) and click_red_chicken == 'down':
+                    if not pygame.sprite.spritecollideany(self,
+                                                          low_barrier_box_group) and not pygame.sprite.spritecollideany(
+                        self, low_barrier_twin_box_group) and click_red_chicken == 'down':
                         self.y += self.vel
                     else:
                         self.x += 5
             if not pygame.sprite.spritecollideany(self, up_earth_group) and click_red_chicken == 'up':
                 if chicken_red.y <= chicken_blue.y or not pygame.sprite.spritecollideany(self,
                                                                                          chick_blue_group) or chicken_red.y >= chicken_blue.y and click_red_chicken == 'up':
-                    if not pygame.sprite.spritecollideany(self, up_barrier_box_group) and click_red_chicken == 'up':
+                    if not pygame.sprite.spritecollideany(self,
+                                                          up_barrier_box_group) and not pygame.sprite.spritecollideany(
+                        self, up_barrier_twin_box_group) and click_red_chicken == 'up':
                         self.y -= self.vel
                     else:
                         self.x += 5
             if pygame.sprite.spritecollideany(self, finish_group):
                 start_music.end.play(start_music.end_game)
+                start_music.end.set_volume(200)
                 start_music.fon_music.set_volume(0)
                 finish = 1
                 if winner == 0:
@@ -192,7 +214,7 @@ def main1():
                 self.x += 10
                 self.y += 20
 
-    class ChickenBlue(pygame.sprite.Sprite):
+    class ChickenBlue(pygame.sprite.Sprite):  # CHICKEN BLUE
         def __init__(self, sheet, level):
             super().__init__(chick_blue_group)
             self.frames = []
@@ -212,6 +234,12 @@ def main1():
             global winner
             if start == 0:
                 self.x += 0.4
+            if pygame.sprite.spritecollideany(self, up_barrier_twin_box_group):
+                self.x -= 5
+
+            if pygame.sprite.spritecollideany(self, low_barrier_twin_box_group):
+                self.x -= 5
+
             if pygame.sprite.spritecollideany(self, up_barrier_box_group):
                 self.x -= 5
 
@@ -221,22 +249,29 @@ def main1():
 
             if click_blue_chicken == 'up':
                 draw_chicken_blue_up()
+
+            # collision
             if not pygame.sprite.spritecollideany(self, low_earth_group) and click_blue_chicken == 'down':
                 if chicken_blue.y >= chicken_red.y or not pygame.sprite.spritecollideany(self,
                                                                                          chick_red_group) and click_blue_chicken == 'down':
-                    if not pygame.sprite.spritecollideany(self, low_barrier_box_group) and click_blue_chicken == 'down':
+                    if not pygame.sprite.spritecollideany(self,
+                                                          low_barrier_box_group) and not pygame.sprite.spritecollideany(
+                        self, low_barrier_twin_box_group) and click_blue_chicken == 'down':
                         self.y += self.vel
                     else:
                         self.x += 5
             if not pygame.sprite.spritecollideany(self, up_earth_group) and click_blue_chicken == 'up':
                 if chicken_blue.y <= chicken_red.y or not pygame.sprite.spritecollideany(self,
                                                                                          chick_red_group) and click_blue_chicken == 'up':
-                    if not pygame.sprite.spritecollideany(self, up_barrier_box_group) and click_blue_chicken == 'up':
+                    if not pygame.sprite.spritecollideany(self,
+                                                          up_barrier_box_group) and not pygame.sprite.spritecollideany(
+                        self, up_barrier_twin_box_group) and click_blue_chicken == 'up':
                         self.y -= self.vel
                     else:
                         self.x += 5
             if pygame.sprite.spritecollideany(self, finish_group):
                 start_music.end.play(start_music.end_game)
+                start_music.end.set_volume(200)
                 start_music.fon_music.set_volume(0)
                 finish = 1
                 if winner == 0:
@@ -259,7 +294,7 @@ def main1():
             for y in range(len(level)):
                 for x in range(len(level[y])):
                     if level[y][x] == '/':
-                        self.y = y * tile_height - 110
+                        self.y = y * tile_height - 125
                         self.x = x * tile_width - 80
 
         def update(self):
@@ -292,28 +327,28 @@ def main1():
 
             return action
 
-    def draw_chicken_red_up():  # motion animation
+    def draw_chicken_red_up():
         global count_UP
         if count_UP == 4:
             count_UP = 0
         chicken_red.image = chicken_red_up_gif[count_UP // 2]
         count_UP += 1
 
-    def draw_chicken_red_down():  # motion animation
+    def draw_chicken_red_down():
         global count_DOWN
         if count_DOWN == 4:
             count_DOWN = 0
         chicken_red.image = chicken_red_down_gif[count_DOWN // 2]
         count_DOWN += 1
 
-    def draw_chicken_blue_up():  # motion animation
+    def draw_chicken_blue_up():
         global count_UP1
         if count_UP1 == 4:
             count_UP1 = 0
         chicken_blue.image = chicken_blue_up_gif[count_UP1 // 2]
         count_UP1 += 1
 
-    def draw_chicken_blue_down():  # motion animation
+    def draw_chicken_blue_down():
         global count_DOWN1
         if count_DOWN1 == 4:
             count_DOWN1 = 0
@@ -343,17 +378,22 @@ def main1():
                     else:
                         LowerEarth('wall', x - c, y)
                         LowerBarrierBox(x - c, y)  # lower barriers
+                elif level[y][x] == '&':
+                    if a <= 40:
+                        a += 1
+                        Barrier('box_up', x - c, y)
+                    else:
+                        Barrier('box_low', x - c, y)
                 elif level[y][x] == '>':
                     Barrier('arrow', x - c, y)
 
         # we will return the player, as well as the size of the field in cells
         return new_player, x, y
 
-    def blur_background():
+    def blur_background():  # BLUR AFTER FINISH
         global d
         if d == 0:
             time.sleep(1.5)
-            print(d)
             rect = pygame.Rect(0, 0, 864, 760)
             sub = screen.subsurface(rect)
             pygame.image.save(sub, "screenshot.jpg")
@@ -368,7 +408,7 @@ def main1():
     chicken_red = ChickenRed(pygame.transform.scale(load_image('ChickenRed-down_stay.png'), (40, 50)), level_map)
     chicken_blue = ChickenBlue(pygame.transform.scale(load_image('ChickenBlue-down_stay.png'), (40, 50)), level_map)
     start_line = Start_line(
-        pygame.transform.rotate(pygame.transform.scale(load_image('Start-line.png'), (170, 150)), 90),
+        pygame.transform.rotate(pygame.transform.scale(load_image('Start-line.png'), (180, 150)), 90),
         level_map)
     chick_red_group.add(chicken_red)
     chick_blue_group.add(chicken_blue)
@@ -378,11 +418,14 @@ def main1():
     start = 1  # start line close
     run = True
     lose = 0
-    restart_img = pygame.transform.scale(pygame.image.load('data/restart.png'), (95, 95))
-    home_img = pygame.transform.scale(pygame.image.load('data/home.png'), (110, 110))
-    restart_button = Button(screen_width // 2 + 30, screen_height // 2 - 80, restart_img)
-    home_button = Button(screen_width // 2 - 120, screen_height // 2 - 90, home_img)
-    blur = 0
+
+    def finish_menu():
+        restart_img = pygame.transform.scale(pygame.image.load('data/restart.png'), (95, 95))
+        home_img = pygame.transform.scale(pygame.image.load('data/home.png'), (110, 110))
+        restart_button = Button(screen_width // 2 + 30, screen_height // 2 - 80, restart_img)
+        home_button = Button(screen_width // 2 - 120, screen_height // 2 - 90, home_img)
+        restart_button.draw()
+        home_button.draw()
 
     d = 0
     w = 0
@@ -431,16 +474,17 @@ def main1():
             finish_group = pygame.sprite.Group()  # lower barriers
             arrows_group = pygame.sprite.Group()  # lower barriers
             waters_group = pygame.sprite.Group()  # lower barriers
+            up_barrier_twin_box_group = pygame.sprite.Group()  # TWIN BOX
+            low_barrier_twin_box_group = pygame.sprite.Group()  # TWIN BOX
             screen.blit(bg, (0, 0))
             hero, level_x, level_y = generate_level(level_map, map_speed)
 
-            #            update_create_sprites.update()  # UPDATE SPRITES
             up_earth_group.draw(screen)
             up_earth_group.update()
             low_earth_group.draw(screen)
             low_earth_group.update()
             up_barrier_box_group.draw(screen)
-            up_barrier_box_group.update()
+            up_barrier_box_group.update()  # UPDATE SPRITES
             low_barrier_box_group.draw(screen)
             low_barrier_box_group.update()
             finish_group.draw(screen)
@@ -453,6 +497,10 @@ def main1():
             arrows_group.update()
             waters_group.draw(screen)
             waters_group.update()
+            up_barrier_twin_box_group.draw(screen)
+            up_barrier_twin_box_group.update()
+            low_barrier_twin_box_group.draw(screen)
+            low_barrier_twin_box_group.update()
         start_group.draw(screen)
         start_group.update()
 
@@ -469,8 +517,8 @@ def main1():
         if finish == 1:
             blur_background()  # blur
 
-            restart_button.draw()  # RESTART BUTTON
-            home_button.draw()  # HOME BUTTON
+            finish_menu()
+
             win_baner = pygame.transform.scale(pygame.image.load('data/win_baner.png'), (250, 100))
             screen.blit(win_baner, (310, 80))
             if winner == 'chicken_red':
@@ -491,23 +539,22 @@ def main1():
             if event.type == pygame.QUIT:
                 run = False
             key = pygame.key.get_pressed()
-            if key[pygame.K_UP] and click_red_chicken == 'down' and finish == 0:
+            if key[pygame.K_UP] and click_red_chicken == 'down' and finish == 0:  # k_UP
                 start_music.jump_hero.play(start_music.jump)
                 click_red_chicken = 'up'
-            elif key[pygame.K_DOWN] and click_red_chicken == 'up' and finish == 0:
+            elif key[pygame.K_DOWN] and click_red_chicken == 'up' and finish == 0:  # k_DOWN
                 start_music.jump_hero.play(start_music.jump)
                 click_red_chicken = 'down'
 
-            elif key[pygame.K_w] and click_blue_chicken == 'down' and finish == 0:
+            elif key[pygame.K_w] and click_blue_chicken == 'down' and finish == 0:  # k_w
                 start_music.jump_hero.play(start_music.jump)
                 click_blue_chicken = 'up'
-            elif key[pygame.K_s] and click_blue_chicken == 'up' and finish == 0:
+            elif key[pygame.K_s] and click_blue_chicken == 'up' and finish == 0:  # k_s
                 start_music.jump_hero.play(start_music.jump)
                 click_blue_chicken = 'down'
 
             if event.type == pygame.MOUSEBUTTONDOWN and finish == 1:
                 if 562 >= event.pos[0] >= 462 and 300 <= event.pos[1] <= 400:  # PUSH RESTART
-                    start_music.end_game.set_volume(0)
                     finish = 0
                     chick_red_group = pygame.sprite.Group()
                     chick_blue_group = pygame.sprite.Group()
@@ -518,7 +565,7 @@ def main1():
                         pygame.transform.scale(load_image('ChickenBlue-down_stay.png'), (40, 50)),
                         level_map)
                     start_line = Start_line(
-                        pygame.transform.rotate(pygame.transform.scale(load_image('Start-line.png'), (170, 150)), 90),
+                        pygame.transform.rotate(pygame.transform.scale(load_image('Start-line.png'), (180, 150)), 90),
                         level_map)
                     chick_red_group.add(chicken_red)
                     chick_blue_group.add(chicken_blue)
